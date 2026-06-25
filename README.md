@@ -15,7 +15,7 @@ a dark terminal aesthetic.
 - [x] View backup runs (dated folders, with size / file count)
 - [x] Inspect DB dump files (stream `.sql.gz`, list tables)
 - [x] Compare two backup runs (file-level diff by path + size)
-- [ ] Download / extract individual files
+- [x] Download / extract individual files (stream over SFTP, optional gunzip)
 
 ## Build & run
 

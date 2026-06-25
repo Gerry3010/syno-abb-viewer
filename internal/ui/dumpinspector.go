@@ -65,7 +65,14 @@ func showDumpInspector(win fyne.Window, fs remotefs.FS, entry remotefs.Entry) {
 
 	fullBtn.OnTapped = func() { scan(0) }
 
-	buttons := container.NewHBox(layout.NewSpacer(), fullBtn, closeBtn)
+	dlBtn := widget.NewButtonWithIcon("Download .gz", theme.DownloadIcon(), func() {
+		downloadFile(win, fs, entry, false)
+	})
+	extractBtn := widget.NewButtonWithIcon("Extract .sql", theme.DownloadIcon(), func() {
+		downloadFile(win, fs, entry, true)
+	})
+
+	buttons := container.NewHBox(layout.NewSpacer(), dlBtn, extractBtn, fullBtn, closeBtn)
 	content := container.NewBorder(header, buttons, nil, nil, list)
 
 	d := dialog.NewCustomWithoutButtons("DB dump: "+name, content, win)
