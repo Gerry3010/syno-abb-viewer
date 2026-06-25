@@ -20,7 +20,10 @@ func NewMainWindow(a fyne.App) fyne.Window {
 	cfg, _ := config.Load()
 
 	status := widget.NewLabel("Not connected")
-	browser := NewFileBrowser(func(s string) { status.SetText(s) })
+	setStatus := func(s string) { status.SetText(s) }
+
+	runs := NewRunsView(setStatus)
+	files := NewFileBrowser(setStatus)
 
 	var current *sshconn.Conn
 	closeCurrent := func() {
@@ -34,17 +37,30 @@ func NewMainWindow(a fyne.App) fyne.Window {
 		closeCurrent()
 		current = conn
 		cfg = c
-		browser.SetFS(remotefs.NewSFTP(conn.SFTP), c.RootPath)
+		fs := remotefs.NewSFTP(conn.SFTP)
+		runs.SetFS(fs, c.RootPath)
+		files.SetFS(fs, c.RootPath)
 		status.SetText("Connected to " + c.User + "@" + c.Host)
 	}
 
 	connectBtn := widget.NewButtonWithIcon("Connect", theme.LoginIcon(), func() {
 		showConnectDialog(w, cfg, onConnect)
 	})
-	refreshBtn := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), browser.Reload)
+	refreshBtn := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {
+		if current == nil {
+			return
+		}
+		runs.SetFS(runs.fs, runs.root)
+		files.Reload()
+	})
+
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Runs", runs.Object()),
+		container.NewTabItem("Files", files.Object()),
+	)
 
 	top := container.NewHBox(connectBtn, refreshBtn)
-	content := container.NewBorder(top, status, nil, nil, browser.Object())
+	content := container.NewBorder(top, status, nil, nil, tabs)
 	w.SetContent(content)
 
 	w.SetCloseIntercept(func() {
