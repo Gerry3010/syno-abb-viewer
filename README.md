@@ -14,7 +14,7 @@ a dark terminal aesthetic.
 - [x] Dark terminal theme (monospace)
 - [x] View backup runs (dated folders, with size / file count)
 - [x] Inspect DB dump files (stream `.sql.gz`, list tables)
-- [ ] Compare two backup runs
+- [x] Compare two backup runs (file-level diff by path + size)
 - [ ] Download / extract individual files
 
 ## Build & run
