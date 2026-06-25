@@ -1,0 +1,11 @@
+# Build output
+/syno-abb-viewer
+*.exe
+
+# Fyne packaging artifacts
+/fyne-cross/
+*.app
+
+# Editor / OS cruft
+.DS_Store
+*.swp
