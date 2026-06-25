@@ -32,6 +32,8 @@ type FileBrowser struct {
 	children map[string][]remotefs.Entry // dir path -> direct children
 	meta     map[string]remotefs.Entry   // path -> metadata
 	loaded   map[string]bool             // dirs whose children are cached or loading
+
+	refreshScheduled bool // coalesces many concurrent loads into one tree.Refresh
 }
 
 // NewFileBrowser builds an empty browser. status receives one-line progress and
@@ -143,6 +145,12 @@ func (b *FileBrowser) updateNode(id widget.TreeNodeID, _ bool, obj fyne.CanvasOb
 	} else {
 		size.SetText("")
 	}
+
+	// Prefetch: a visible directory loads its children in the background before
+	// it's expanded, so opening it is instant instead of popping in after SFTP.
+	if ok && e.IsDir {
+		b.load(id)
+	}
 }
 
 // load fetches a directory's children once, off the UI thread.
@@ -173,11 +181,28 @@ func (b *FileBrowser) load(dir string) {
 			b.meta[e.Path] = e
 		}
 		b.mu.Unlock()
-		fyne.Do(func() {
-			b.tree.Refresh()
-			b.setStatus(fmt.Sprintf("%d items in %s", len(entries), dir))
-		})
+		fyne.Do(func() { b.setStatus(fmt.Sprintf("%d items in %s", len(entries), dir)) })
+		b.scheduleRefresh()
 	}()
+}
+
+// scheduleRefresh coalesces bursts of completed loads into a single tree.Refresh
+// on the UI thread, avoiding the flicker of many back-to-back redraws.
+func (b *FileBrowser) scheduleRefresh() {
+	b.mu.Lock()
+	if b.refreshScheduled {
+		b.mu.Unlock()
+		return
+	}
+	b.refreshScheduled = true
+	b.mu.Unlock()
+
+	fyne.Do(func() {
+		b.mu.Lock()
+		b.refreshScheduled = false
+		b.mu.Unlock()
+		b.tree.Refresh()
+	})
 }
 
 func (b *FileBrowser) setStatus(s string) {
