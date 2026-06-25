@@ -72,7 +72,9 @@ func Dial(cfg config.Config, trust TrustFunc) (*Conn, error) {
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
 		client.Close()
-		return nil, fmt.Errorf("open sftp: %w", err)
+		// "subsystem request failed" means SSH connected but the SFTP subsystem
+		// isn't available — on Synology, SFTP is a separate service from SSH.
+		return nil, fmt.Errorf("open sftp: %w — on Synology enable it under Control Panel → File Services → FTP → SFTP", err)
 	}
 	return &Conn{Client: client, SFTP: sftpClient}, nil
 }
