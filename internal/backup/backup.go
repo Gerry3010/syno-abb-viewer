@@ -1,31 +1,13 @@
-// Package backup will model Synology backup runs and database dumps.
+// Package backup models the server's dated backup runs and their contents.
 //
-// Milestone 1 only browses the raw directory tree, so these types are
-// placeholders to be fleshed out in later milestones (view runs, inspect
-// dumps, compare runs). They are intentionally minimal for now.
+// Runs are plain dated directories (see runs.go). Each holds databases/ (dumps),
+// projects/, and volumes/. Per-dump table listing and run-vs-run comparison come
+// in later milestones; Dump is the placeholder for that work.
 package backup
 
-import "time"
-
-// Status is the outcome of a backup run.
-type Status string
-
-const (
-	StatusUnknown Status = "unknown"
-	StatusOK      Status = "ok"
-	StatusFailed  Status = "failed"
-)
-
-// Run is a single backup run discovered on the DiskStation. Fields will be
-// derived from the on-disk layout once that convention is pinned down.
-type Run struct {
-	Path   string
-	When   time.Time
-	Size   int64
-	Status Status
-}
-
-// Dump is a database dump file within a run (tables/size come later).
+// Dump is a database dump file within a run's databases/ directory
+// (e.g. "passbubble-postgres-1_2026-06-25_00-47-45.sql.gz"). Table listing is
+// added in a later milestone.
 type Dump struct {
 	Path string
 	Size int64
