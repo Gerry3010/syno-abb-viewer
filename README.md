@@ -7,13 +7,13 @@ a dark terminal aesthetic.
 > The name nods to Synology *Active Backup for Business*. Milestone 1 is a generic
 > remote-filesystem browser; ABB-specific views come later.
 
-## Status — Milestone 1
+## Status
 
 - [x] Connect over SSH with **key or password** auth (host-key verified via `known_hosts`)
 - [x] Browse the backup directory tree, lazily loaded over SFTP
 - [x] Dark terminal theme (monospace)
-- [ ] View backup runs (date / size / status)
-- [ ] Inspect DB dump files (list tables, size)
+- [x] View backup runs (dated folders, with size / file count)
+- [x] Inspect DB dump files (stream `.sql.gz`, list tables)
 - [ ] Compare two backup runs
 - [ ] Download / extract individual files
 

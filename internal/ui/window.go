@@ -22,8 +22,13 @@ func NewMainWindow(a fyne.App) fyne.Window {
 	status := widget.NewLabel("Not connected")
 	setStatus := func(s string) { status.SetText(s) }
 
-	runs := NewRunsView(setStatus)
+	runs := NewRunsView(w, setStatus)
 	files := NewFileBrowser(setStatus)
+	files.OnSelectFile = func(fs remotefs.FS, e remotefs.Entry) {
+		if isDumpFile(e.Name) {
+			showDumpInspector(w, fs, e)
+		}
+	}
 
 	var current *sshconn.Conn
 	closeCurrent := func() {

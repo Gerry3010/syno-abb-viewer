@@ -26,8 +26,9 @@ type RunsView struct {
 	runs []backup.Run
 }
 
-// NewRunsView builds an empty runs view. status feeds the shared status bar.
-func NewRunsView(status func(string)) *RunsView {
+// NewRunsView builds an empty runs view. status feeds the shared status bar;
+// win is used to host the dump-inspector dialog when a .sql.gz file is selected.
+func NewRunsView(win fyne.Window, status func(string)) *RunsView {
 	v := &RunsView{status: status}
 
 	v.list = widget.NewList(
@@ -41,6 +42,11 @@ func NewRunsView(status func(string)) *RunsView {
 
 	v.header = widget.NewLabel("Not connected")
 	v.detail = NewFileBrowser(status)
+	v.detail.OnSelectFile = func(fs remotefs.FS, e remotefs.Entry) {
+		if isDumpFile(e.Name) {
+			showDumpInspector(win, fs, e)
+		}
+	}
 
 	right := container.NewBorder(v.header, nil, nil, nil, v.detail.Object())
 	v.split = container.NewHSplit(v.list, right)
