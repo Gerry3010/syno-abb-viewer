@@ -25,9 +25,7 @@ func NewMainWindow(a fyne.App) fyne.Window {
 	runs := NewRunsView(w, setStatus)
 	files := NewFileBrowser(setStatus)
 	files.OnSelectFile = func(fs remotefs.FS, e remotefs.Entry) {
-		if isDumpFile(e.Name) {
-			showDumpInspector(w, fs, e)
-		}
+		openFileAction(w, fs, e)
 	}
 
 	var current *sshconn.Conn

@@ -43,9 +43,7 @@ func NewRunsView(win fyne.Window, status func(string)) *RunsView {
 	v.header = widget.NewLabel("Not connected")
 	v.detail = NewFileBrowser(status)
 	v.detail.OnSelectFile = func(fs remotefs.FS, e remotefs.Entry) {
-		if isDumpFile(e.Name) {
-			showDumpInspector(win, fs, e)
-		}
+		openFileAction(win, fs, e)
 	}
 
 	right := container.NewBorder(v.header, nil, nil, nil, v.detail.Object())
