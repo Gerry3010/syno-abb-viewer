@@ -22,6 +22,10 @@ type FileBrowser struct {
 	tree   *widget.Tree
 	status func(string)
 
+	// OnSelectFile, if set, is called when a non-directory node is selected,
+	// with the browser's filesystem and the selected entry.
+	OnSelectFile func(fs remotefs.FS, e remotefs.Entry)
+
 	mu       sync.Mutex
 	fs       remotefs.FS
 	root     string
@@ -40,7 +44,17 @@ func NewFileBrowser(status func(string)) *FileBrowser {
 		loaded:   map[string]bool{},
 	}
 	b.tree = widget.NewTree(b.childUIDs, b.isBranch, createNode, b.updateNode)
-	b.tree.OnBranchOpened = func(id widget.TreeNodeID) { b.load(id) }
+	// Loading is driven by childUIDs (auto-load on first ask), not OnBranchOpened,
+	// so a Refresh re-populates every visible branch, not just the root.
+	b.tree.OnSelected = func(id widget.TreeNodeID) {
+		b.mu.Lock()
+		e, ok := b.meta[id]
+		fs := b.fs
+		b.mu.Unlock()
+		if ok && !e.IsDir && b.OnSelectFile != nil {
+			b.OnSelectFile(fs, e)
+		}
+	}
 	return b
 }
 
@@ -74,15 +88,22 @@ func (b *FileBrowser) Reload() {
 
 func (b *FileBrowser) childUIDs(id widget.TreeNodeID) []widget.TreeNodeID {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	key := id
 	if key == "" {
 		key = b.root
 	}
 	kids := b.children[key]
+	needLoad := b.fs != nil && !b.loaded[key]
 	ids := make([]widget.TreeNodeID, 0, len(kids))
 	for _, e := range kids {
 		ids = append(ids, e.Path)
+	}
+	b.mu.Unlock()
+
+	// Auto-load on first ask. load() is idempotent and does no synchronous UI
+	// work, so triggering it from within this render callback is safe.
+	if needLoad {
+		b.load(key)
 	}
 	return ids
 }
@@ -135,7 +156,8 @@ func (b *FileBrowser) load(dir string) {
 	fs := b.fs
 	b.mu.Unlock()
 
-	b.setStatus("Loading " + dir + " …")
+	// No synchronous UI here: load() may be called from within a render pass
+	// (childUIDs). All UI mutations happen on the UI thread via fyne.Do.
 	go func() {
 		entries, err := fs.ReadDir(dir)
 		if err != nil {
