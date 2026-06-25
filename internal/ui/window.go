@@ -58,13 +58,19 @@ func NewMainWindow(a fyne.App) fyne.Window {
 		runs.SetFS(runs.fs, runs.root)
 		files.Reload()
 	})
+	compareBtn := widget.NewButtonWithIcon("Compare", theme.ContentCopyIcon(), func() {
+		if current == nil {
+			return
+		}
+		showCompareDialog(w, runs.fs, runs.runs)
+	})
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Runs", runs.Object()),
 		container.NewTabItem("Files", files.Object()),
 	)
 
-	top := container.NewHBox(connectBtn, refreshBtn)
+	top := container.NewHBox(connectBtn, refreshBtn, compareBtn)
 	content := container.NewBorder(top, status, nil, nil, tabs)
 	w.SetContent(content)
 
